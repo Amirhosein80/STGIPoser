@@ -684,7 +684,7 @@ def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
 
         seq = file.split("\\")[-2]
         target_folder = file.split("unipd")[0].replace("raw data", folder)
-        target_folder = os.path.join(target_folder, "MVNX_process_data", seq)
+        target_folder = os.path.join(target_folder, "UNIPD_process_data", seq)
         os.makedirs(target_folder, exist_ok=True)
 
         np.savez(
@@ -717,4 +717,4 @@ if __name__ == "__main__":
     # process_andy(smpl_path=smpl_path, mvnx_path=mtw_path)
     # process_cip(smpl_path=smpl_path, mvnx_path=mvnx_path)
     process_virginia(smpl_path=smpl_path, mvnx_path=virg_path)
-    # process_unipd(smpl_path=smpl_path, mvnx_path=uni_path)
+    process_unipd(smpl_path=smpl_path, mvnx_path=uni_path)
