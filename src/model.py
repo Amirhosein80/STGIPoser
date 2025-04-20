@@ -134,7 +134,7 @@ class STIPoser(BaseModel):
             - out_rot: Rotation predictions
             - out_trans: Translation predictions if self.use_translation is True
             - imus_velocity: IMU velocity predictions if self.use_imu_aux is True
-            
+
         Examples
         --------
         >>> datas = {
@@ -207,7 +207,7 @@ class STIPoser(BaseModel):
         Returns
         -------
         None
-        """       
+        """
         self.states = [None, None, None, None]
 
         last_vimu = torch.zeros((1, 1, 6, 3), device=self.device)
