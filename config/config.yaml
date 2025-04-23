@@ -1,11 +1,10 @@
 training:
-  experimnet_name: "STIPoser"
-  device: "cpu"
-  resume: True
-
-  batch_size: 48
-  num_worker: 4
+  experimnet_name: "stiposer_uwb_trans_dip"
+  model_name: "STIPoser"
+  device: "cuda"
+  resume: False
   epochs: 200
+  comet_api_key: "BcjBvrAuzGfx2Shw2HrMgbEeq"
 
 smpl:
   file: "./artifacts/smpl/SMPL_MALE.pkl"
@@ -15,43 +14,60 @@ smpl:
   leaf_joints: [0, 7, 8, 15, 20, 21]
 
 model:
-  embed_dim: 256
+  embed_dim: 288
   avg_kernel: 7
   use_uwb: True
-  use_uwb_attn: True
-  use_translation: False
+  use_uwb_attn: False
+  use_translation: True
   use_imu_aux: True
   adj_path: "./artifacts/adj_matrixes.pt"
 
 
 optimizer:
   name: "adamw"
-  lr: 1e-3
+  lr: 0.001
   momentum: 0.9
-  betas: [0.9, 0.999]
+  adamw_betas: [0.9, 0.999]
   weight_decay: 0.05
   grad_norm: 1.0
   schedular: "cos"
   warmup:
     factor: 0.1
-    epochs: 10
+    epochs: 0
 
 dataset:
   dir: "./data"
   seq_length: 300
   overlap: 0
+  batch_size: 48
+  num_worker: 4
+  random_noise:
+    std: 0.1
+    p: 0.5
 
 loss:
-  aux_weight: 0.1
-  trans_weight: 0.1
-  smooth_l1_beta: 0.01
+  aux_weight: 0.5
+  trans_weight: 1.0
+  pose_beta: 0.01
+  trans_beta: 0.1
+  aux_beta: 0.01
 
   out_rot:
     target: "grot"
     indexs: [1, 2, 3, 6, 9, 12, 13, 14, 16, 17]
+  out_rot_foot:
+    target: "grot"
+    indexs: [1, 2]
+  out_rot_body:
+    target: "grot"
+    indexs: [3, 6, 9, 12]
+  out_rot_hand:
+    target: "grot"
+    indexs: [13, 14, 16, 17]
 
   out_trans:
     target: "trans"
+    indexs: None
     
   aux_ivel:
     target: "jvel"
@@ -79,3 +95,25 @@ famo:
   lr: 0.025
   gamma: float = 0.01,   # the regularization coefficient
 
+data_paths:
+  dip: 
+    path: "./data/raw data/DIP_IMU"
+    set: "Test"
+  total capture: 
+    path: "./data/raw data/TotalCapture"
+    set: "Valid"
+  emonike: 
+    path: "./data/raw data/EmokineDataset_v1.0/Data/MVNX"
+    set: "Train" 
+  andy: 
+    path: "./data/raw data/MTwAwinda"
+    set: "Train" 
+  cip: 
+    path: "./data/raw data/xens_mnvx/"
+    set: "Train" 
+  virginia: 
+    path: "./data/raw data/mvnx-dataset/"
+    set: "Train" 
+  unipd: 
+    path: "./data/raw data/mvnx-dataset/"
+    set: "Train" 
