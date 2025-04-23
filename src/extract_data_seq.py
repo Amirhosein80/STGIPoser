@@ -6,6 +6,9 @@ import numpy as np
 import tqdm
 
 from src.config_reader import read_config
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def extract_seq(phase, data_path, seq_length, overlap=0):
@@ -38,6 +41,7 @@ def extract_seq(phase, data_path, seq_length, overlap=0):
     --------
     >>> extract_seq(phase="Train", data_path="./data", seq_length=120, overlap=20)
     """
+    logger.info(f"Starting data sequences from the {phase} folder")
     data_dir = os.path.join(data_path, phase, "*/*/*.npz")
     data_dirs = glob.glob(data_dir)
     loop = tqdm.tqdm(data_dirs)
@@ -65,7 +69,6 @@ def extract_seq(phase, data_path, seq_length, overlap=0):
                     "trans": data["trans"][start_index:end_index],
                     "jvel": data["jvel"][start_index:end_index],
                     "uwb": data["uwb"][start_index:end_index],
-                    "offset": data["offset"][start_index:end_index],
                     "last_trans": data["trans"][start_index - 1],
                     "last_jvel": data["jvel"][start_index - 1],
                 }
@@ -86,13 +89,15 @@ def extract_seq(phase, data_path, seq_length, overlap=0):
                 name = "_".join(name)
 
                 np.savez(os.path.join(target_folder, name), **targets)
+    logger.info(f"All sequences are extracted the {target_folder} dir")
 
 
 if __name__ == "__main__":
-    configs = read_config(r"config/config.yaml")
-    extract_seq(
-        data_path=configs["dataset"]["dir"],
-        phase="Train",
-        seq_length=configs["dataset"]["seq_length"],
-        overlap=configs["dataset"]["overlap"],
-    )
+    pass
+    # configs = read_config(r"config/config.yaml")
+    # extract_seq(
+    #     data_path=configs["dataset"]["dir"],
+    #     phase="Train",
+    #     seq_length=configs["dataset"]["seq_length"],
+    #     overlap=configs["dataset"]["overlap"],
+    # )
