@@ -4,9 +4,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as f
 
-from blocks import CausalAvg
-from smpl_model import ParametricModel
+from src.blocks import CausalAvg
+from src.smpl_model import ParametricModel
+from src.logger import get_logger
 
+logger = get_logger(__name__)
 
 class BaseModel(nn.Module):
     """
@@ -262,6 +264,7 @@ def run_benchmark(model: nn.Module, datas: tuple[torch.Tensor, torch.Tensor]) ->
     latency = elapsed / num_images * 1000
     fps = 1000 / latency
     print(f"Elapsed time: {latency:.3} ms, FPS: {fps:.3}")
+    logger.info(f"Elapsed time: {latency:.3} ms, FPS: {fps:.3}")
 
 
 if __name__ == "__main__":
