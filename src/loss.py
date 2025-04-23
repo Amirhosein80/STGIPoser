@@ -1,17 +1,17 @@
 import torch
 import torch.nn as nn
 
-from logger import get_logger
-from base_model import rot_mat2r6d
+from src.base_model import rot_mat2r6d
+from src.logger import get_logger
 
 
 class MotionLoss(nn.Module):
     """
     Loss function for pose and translation between predicted and ground truth
-    
+
     Parameters:
         configs: configs for loss functions
-        
+
     Example:
     >>> configs = {
             "loss": {
@@ -23,18 +23,23 @@ class MotionLoss(nn.Module):
     >>> criterion = MotionLoss(configs)
     >>> criterion(predicts, targets)
     """
+
     def __init__(self, configs: dict) -> None:
-        
+
         super().__init__()
         self.configs = configs
-        self.sml1_loss = nn.SmoothL1Loss(beta=self.configs["loss"]["smooth_l1_beta"])
+        self.pose_loss = nn.SmoothL1Loss(beta=self.configs["loss"]["pose_beta"])
+        self.trans_loss = nn.SmoothL1Loss(beta=self.configs["loss"]["trans_beta"])
+        self.aux_loss = nn.SmoothL1Loss(beta=self.configs["loss"]["aux_beta"])
         self.trans_weight = self.configs["loss"]["trans_weight"]
         self.aux_weight = self.configs["loss"]["aux_weight"]
 
-    def forward(self, predicts: dict, targets: dict) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, predicts: dict, targets: dict
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Calculate losses for pose and translation between predicted and ground truth
-        
+
         Parameters:
             predicts: model predictions
             targets: ground truth
@@ -50,15 +55,25 @@ class MotionLoss(nn.Module):
             if tars == "grot":
                 gt = rot_mat2r6d(targets[tars])[:, :, inds]
             elif tars == "trans":
-                    label = targets[tars]
+                gt = targets[tars]
             else:
-                label = targets[tars][:, :, inds]
+                gt = targets[tars][:, :, inds]
 
-            if key == "out_rot":
-                pose_loss += self.sml1_loss(predicts[key], label)
-            elif key == "out_trn":
-                trans_loss += self.sml1_loss(predicts[key], label)
+            if "out_rot" in key:
+                pose_loss += self.pose_loss(predicts[key], gt)
+            elif "out_trans" in key:
+                trans_loss += self.trans_loss(predicts[key], gt)
             else:
-                aux_loss += self.sml1_loss(predicts[key].reshape(-1, 3), label.reshape(-1, 3))
+                aux_loss += self.aux_loss(
+                    predicts[key], gt
+                )
 
-        return pose_loss, trans_loss, aux_loss
+        main_loss = (
+            pose_loss + (self.trans_weight * trans_loss) + (self.aux_weight * aux_loss)
+        )
+        return (
+            main_loss,
+            pose_loss,
+            (trans_loss * self.trans_weight),
+            (aux_loss * self.aux_weight),
+        )
