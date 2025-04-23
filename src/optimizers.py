@@ -2,8 +2,8 @@ import torch
 import torch.amp as amp
 import torch.optim as optim
 
-from config_reader import read_config
-from logger import get_logger
+from src.config_reader import read_config
+from src.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,30 +13,34 @@ def get_optimizer(
 ) -> tuple[optim.Optimizer, optim.lr_scheduler.LRScheduler]:
     """
     Get optimizer and scheduler
-    
+
     Parameters
     ----------
     model: torch.nn.Module
         The model to optimize
     configs: dict
         The configuration dictionary
-        
-    Returns 
+
+    Returns
     -------
     optimizer: torch.optim.Optimizer
         The optimizer
     scheduler: torch.optim.lr_scheduler.LRScheduler
         The scheduler
-    
+
     Examples
     --------
     >>> optimizer, scheduler = get_optimizer(model, configs)
-    
+
     Raises
     ------
     NotImplementedError
         If the optimizer or scheduler is not implemented
     """
+    logger.info(
+        f"Get optimizer : {configs['optimizer']['name']} with lr : {configs['optimizer']['lr']} and scheduler : {configs['optimizer']['schedular']}"
+    )
+
     if hasattr(model, "get_params"):
         params = model.get_params(
             lr=configs["optimizer"]["lr"],
