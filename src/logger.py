@@ -1,3 +1,4 @@
+import os
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -13,9 +14,12 @@ TRAIN_TIME = datetime.now().strftime("%Y-%m-%d-%H-%M")
 LOGS_FILE = LOGS_DIR / f"logs_{TODAY_TIME}.log"
 
 logging.basicConfig(
-    filename=LOGS_FILE,
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO,
+    handlers=[
+        logging.FileHandler(LOGS_FILE),  # File handler
+        logging.StreamHandler()          # Console handler
+    ]
 )
 
 
@@ -42,10 +46,11 @@ def get_logger(name):
     >>> logger = get_logger(__name__)
     >>> logger.info("This is an informational message.")
     """
-    return logging.getLogger(name)
+    logger = logging.getLogger(name)
+    return logger
 
 
-def get_train_logger(name, experiment_name):
+def get_train_logger(name, experiment_name, log_dir):
     """Gets a logger configured to write to the train's log file.
 
     This function utilizes a new logging configuration set up
@@ -71,6 +76,11 @@ def get_train_logger(name, experiment_name):
     >>> logger.info("This is an informational message.")
     """
     train_logger = logging.getLogger(name)
-    train_handler = logging.FileHandler(f"log_{experiment_name}_{TRAIN_TIME}.log")
+    train_handler = logging.FileHandler(
+        os.path.join(log_dir, f"log_{experiment_name}_{TRAIN_TIME}.log")
+    )
     train_logger.addHandler(train_handler)
     return train_logger
+
+
+
