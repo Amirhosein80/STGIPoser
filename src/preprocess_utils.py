@@ -9,7 +9,7 @@ import pandas as pd
 import roma
 import torch
 
-from smpl_model import ParametricModel
+from src.smpl_model import ParametricModel
 
 V_MASK = [3021, 1176, 4662, 411, 1961, 5424]
 AMASS_ROT = torch.tensor([[[1, 0, 0], [0, 0, 1], [0, -1, 0.0]]], device="cuda")

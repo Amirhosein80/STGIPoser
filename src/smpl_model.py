@@ -8,7 +8,7 @@ import pickle
 
 import numpy as np
 
-from kinematics import *
+from src.kinematics import *
 
 
 def append_value(x: torch.Tensor, value: float, dim=-1):

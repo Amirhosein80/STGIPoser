@@ -11,8 +11,8 @@ import roma
 import torch
 from tqdm import tqdm
 
-from logger import get_logger
-from preprocess_utils import (
+from src.logger import get_logger
+from src.preprocess_utils import (
     AMASS_ROT,
     DIP_IMU_MASK,
     IG_JOINTS,
@@ -26,7 +26,7 @@ from preprocess_utils import (
     read_xlsx,
     virginia_clip_config,
 )
-from smpl_model import ParametricModel
+from src.smpl_model import ParametricModel
 
 logger = get_logger(__name__)
 
@@ -701,20 +701,21 @@ def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
 
 
 if __name__ == "__main__":
-    smpl_path = "./data/smpl/SMPL_MALE.pkl"
+    pass
+    # smpl_path = "./data/smpl/SMPL_MALE.pkl"
 
-    dip_path = "./data/raw data/DIP_IMU"
-    tc_path = "./data/raw data/TotalCapture"
-    emonike_path = "./data/raw data/EmokineDataset_v1.0/Data/MVNX"
-    mtw_path = "./data/raw data/MTwAwinda"
-    mvnx_path = "./data/raw data/xens_mnvx/"
-    virg_path = "./data/raw data/mvnx-dataset/"
-    uni_path = "./data/raw data/unipd/"
+    # dip_path = "./data/raw data/DIP_IMU"
+    # tc_path = "./data/raw data/TotalCapture"
+    # emonike_path = "./data/raw data/EmokineDataset_v1.0/Data/MVNX"
+    # mtw_path = "./data/raw data/MTwAwinda"
+    # mvnx_path = "./data/raw data/xens_mnvx/"
+    # virg_path = "./data/raw data/mvnx-dataset/"
+    # uni_path = "./data/raw data/unipd/"
 
-    # process_dip(smpl_path=smpl_path, dip_path=dip_path)
-    # process_total_capture(smpl_path=smpl_path, tc_path=tc_path)
-    # process_emonike(smpl_path=smpl_path, emonike_path=emonike_path)
-    # process_andy(smpl_path=smpl_path, mvnx_path=mtw_path)
-    # process_cip(smpl_path=smpl_path, mvnx_path=mvnx_path)
-    process_virginia(smpl_path=smpl_path, mvnx_path=virg_path)
-    process_unipd(smpl_path=smpl_path, mvnx_path=uni_path)
+    # # process_dip(smpl_path=smpl_path, dip_path=dip_path)
+    # # process_total_capture(smpl_path=smpl_path, tc_path=tc_path)
+    # # process_emonike(smpl_path=smpl_path, emonike_path=emonike_path)
+    # # process_andy(smpl_path=smpl_path, mvnx_path=mtw_path)
+    # # process_cip(smpl_path=smpl_path, mvnx_path=mvnx_path)
+    # process_virginia(smpl_path=smpl_path, mvnx_path=virg_path)
+    # process_unipd(smpl_path=smpl_path, mvnx_path=uni_path)
