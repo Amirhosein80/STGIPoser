@@ -1,9 +1,12 @@
 from collections import OrderedDict
 
-from base_model import BaseModel, run_benchmark
-from blocks import *
-from config_reader import read_config
-from smpl_model import ParametricModel
+from src.base_model import BaseModel, run_benchmark
+from src.blocks import *
+from src.config_reader import read_config
+from src.logger import get_logger
+from src.smpl_model import ParametricModel
+
+logger = get_logger(__name__)
 
 
 class STIPoser(BaseModel):
@@ -57,6 +60,12 @@ class STIPoser(BaseModel):
         self.use_translation = configs["model"]["use_translation"]
         self.use_imu_aux = configs["model"]["use_imu_aux"]
         self.use_uwb_attn = configs["model"]["use_uwb_attn"]
+
+        logger.info(
+            f"Initialize STIPoser model with embed_dim: {self.embed_dim},"
+            f"use_uwb: {self.use_uwb}, use_translation: {self.use_translation},"
+            f"use_imu_aux: {self.use_imu_aux}, use_uwb_attn: {self.use_uwb_attn}"
+        )
 
         self.temp1_gru = MultiGRU(self.embed_dim, self.embed_dim)
         self.temp2_gru = MultiGRU(self.embed_dim, self.embed_dim)
@@ -152,13 +161,13 @@ class STIPoser(BaseModel):
         imu_ori = datas["imu_ori"]
         uwb = datas["uwb"]
 
+        x, _ = self.normalize(imu_acc=imu_acc, imu_ori=imu_ori, casual_state=None)
+
         batch_size, seq_len, num_imus, _ = imu_acc.size()
         last_vimu = datas["last_jvel"].to(x.dtype)
 
-        hs1 = self.vel_init(last_vimu[:, self.leaf_joints].unsqueeze(1))
+        hs1 = self.vel_init(last_vimu[:, self.leaf].unsqueeze(1))
         hs1 = list(hs1.chunk(2, dim=-1))
-
-        x, _ = self.normalize(imu_acc=imu_acc, imu_ori=imu_ori, casual_state=None)
 
         if self.use_uwb:
             x = torch.cat([x, uwb], dim=-1)
@@ -172,9 +181,7 @@ class STIPoser(BaseModel):
         x = self.imus_spatial2(x, uwb)
         x, _ = self.temp2_gru(x, None)
         if self.use_imu_aux:
-            outputs["imus_velocity"] = self.imuv_head(x).reshape(
-                batch_size, seq_len, 6, 3
-            )
+            outputs["aux_ivel"] = self.imuv_head(x).reshape(batch_size, seq_len, 6, 3)
 
         x = self.pose_spatial(x)
 
@@ -183,19 +190,21 @@ class STIPoser(BaseModel):
             hs3 = self.tran_init(last_trans).unsqueeze(1).unsqueeze(1)
             hs3 = list(hs3.chunk(2, dim=-1))
 
-            t, _ = self.tran_head(t[:, :, -1:], hs3)
+            t, _ = self.tran_head(x[:, :, -1:], hs3)
             outputs["out_trans"] = t.squeeze(-2)
 
-        x = torch.cat(
-            [
-                self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6),
-                self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6),
-                self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6),
-            ],
-            dim=-2,
-        )
+        # x = torch.cat(
+        #     [
+        #         self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6),
+        #         self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6),
+        #         self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6),
+        #     ],
+        #     dim=-2,
+        # )
 
-        outputs["out_rot"] = x
+        outputs["out_rot_foot"] = self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6)
+        outputs["out_rot_body"] = self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6)
+        outputs["out_rot_hand"] = self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6)
 
         return outputs
 
@@ -386,6 +395,7 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision("high")
 
     configs = read_config("./config/config.yaml")
+    configs["training"]["device"] = "cpu"
     smpl_model = ParametricModel(configs["smpl"]["file"])
     model = STIPoser(configs, smpl_model)
     device = configs["training"]["device"]
