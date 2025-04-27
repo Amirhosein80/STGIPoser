@@ -250,9 +250,9 @@ class GCNLayer(nn.Module):
         else:
             self.A = A.unsqueeze(-1)
 
-        self.W = nn.Parameter(torch.empty(*A.shape, out_dim)).to(A.device)
+        self.W = nn.Parameter(torch.empty(*A.shape, out_dim))
         nn.init.xavier_uniform_(self.W)
-
+        
         self.proj = nn.Sequential(
             nn.LayerNorm(out_dim),
             nn.ReLU(),

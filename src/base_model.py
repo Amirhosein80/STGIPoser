@@ -41,8 +41,8 @@ class BaseModel(nn.Module):
 
         self.reduced = configs["smpl"]["reduced_joints"]
         self.ignored = configs["smpl"]["ignored_joints"]
-        self.leaf = configs["smpl"]["imu_joints"]
-        self.imu = configs["smpl"]["leaf_joints"]
+        self.leaf = configs["smpl"]["leaf_joints"]
+        self.imu = configs["smpl"]["imu_joints"]
         self.avg_kernel = configs["model"]["avg_kernel"]
 
         self.device = configs["training"]["device"]
@@ -92,8 +92,7 @@ class BaseModel(nn.Module):
 
         global_full_pose = torch.eye(3, device=glb_pose.device).repeat(T, 24, 1, 1)
         global_full_pose[:, self.reduced[1:]] = glb_pose
-
-        global_full_pose[:, [0, 4, 5, 15, 18, 19]] = sensor_rot
+        global_full_pose[:, self.imu] = sensor_rot
 
         pose = self.smpl_model.inverse_kinematics_R(global_full_pose)
         pose[:, self.ignored] = ign_pose
