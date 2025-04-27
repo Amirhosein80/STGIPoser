@@ -87,6 +87,8 @@ class Trainer:
         self.model_name = configs["training"]["model_name"]
         self.use_translation = configs["model"]["use_translation"]
         self.use_imu_aux = configs["model"]["use_imu_aux"]
+        self.sip_joints = configs["smpl"]["sip_joints"]
+
 
         self.metric_trans = AverageMeter()
         self.metric_pose = AverageMeter()
@@ -171,32 +173,30 @@ class Trainer:
 
         else:
             with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
-                per_rot, per_trn = self.model.forward_offline(
+                per_pose, per_trn = self.model.forward_offline(
                     imu_acc=datas["imu_acc"][0],
                     imu_ori=datas["imu_ori"][0],
                     uwb=datas["uwb"][0],
-                    return_6d=True,
                 )
             
-            tar_rot = datas["grot"]
-            tar_sip = rot_mat2r6d(tar_rot[:, :, [1, 2, 16, 17]]).reshape(-1, 6)
-            tar_trn = datas["trans"].reshape(-1, 3)
+                tar_grot = datas["grot"][0]
+                per_grot = self.model.smpl_model.forward_kinematics_R(per_pose)
             
-            per_sip = per_rot[:, [0, 1, 8, 9]].reshape(-1, 6)
-            self.metric_pose.update(angle_between(per_sip, tar_sip))
+                self.metric_pose.update(angle_between(per_grot[:, self.sip_joints], tar_grot[:, self.sip_joints]))
 
-            valid_output = {"out_rot": per_rot.unsqueeze(0)}
-            valid_target = {"grot": tar_rot}
+                valid_output = {"out_rot": rot_mat2r6d(per_grot.unsqueeze(0)[:, :, self.model.reduced[1:]])}
+                valid_target = {"grot": tar_grot.unsqueeze(0)}
 
-            if self.use_translation:
-                per_trn = per_trn.reshape(-1, 3)
-                self.metric_trans.update(l1_loss(per_trn, tar_trn))
-                valid_output["out_trans"] = per_trn
-                valid_target["trans"] = tar_trn
+                if self.use_translation:
+                    tar_trn = datas["trans"].reshape(-1, 3)
+                    per_trn = per_trn.reshape(-1, 3)
+                    self.metric_trans.update(l1_loss(per_trn, tar_trn))
+                    valid_output["out_trans"] = per_trn
+                    valid_target["trans"] = tar_trn
 
-            main_loss, pose_loss, trans_loss, aux_loss = self.criterion(
-                valid_output, valid_target
-            )
+                main_loss, pose_loss, trans_loss, aux_loss = self.criterion(
+                    valid_output, valid_target
+                )
 
             self.loss_valid.update(main_loss)
             self.loss_valid_pose.update(pose_loss)
