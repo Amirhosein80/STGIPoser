@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from src.base_model import rot_mat2r6d
-from src.logger import get_logger
 
 
 class MotionLoss(nn.Module):
