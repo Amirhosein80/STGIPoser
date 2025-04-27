@@ -175,7 +175,6 @@ class STIPoser(BaseModel):
             uwb = None
 
         x = self.imu_embedding(x)
-
         x = self.imus_spatial1(x, uwb)
         x, _ = self.temp1_gru(x, hs1)
         x = self.imus_spatial2(x, uwb)
@@ -193,18 +192,16 @@ class STIPoser(BaseModel):
             t, _ = self.tran_head(x[:, :, -1:], hs3)
             outputs["out_trans"] = t.squeeze(-2)
 
-        # x = torch.cat(
-        #     [
-        #         self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6),
-        #         self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6),
-        #         self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6),
-        #     ],
-        #     dim=-2,
-        # )
+        x = torch.cat(
+            [
+                self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6),
+                self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6),
+                self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6),
+            ],
+            dim=-2,
+        )
 
-        outputs["out_rot_foot"] = self.pose_head_foot(x[:, :, 0:1]).reshape(batch_size, seq_len, 2, 6)
-        outputs["out_rot_body"] = self.pose_head_body(x[:, :, 1:2]).reshape(batch_size, seq_len, 4, 6)
-        outputs["out_rot_hand"] = self.pose_head_hand(x[:, :, 2:3]).reshape(batch_size, seq_len, 4, 6)
+        outputs["out_rot"] = x
 
         return outputs
 
@@ -308,7 +305,7 @@ class STIPoser(BaseModel):
         return self.glb_6d_to_full_local_mat(x, sensor_rot=sensors), t
 
     @torch.no_grad()
-    def forward_offline(self, imu_acc, imu_ori, uwb, return_6d=False):
+    def forward_offline(self, imu_acc, imu_ori, uwb):
         """Forward pass of the STIPoser model for offline inference.
 
         This method performs a forward pass of the STIPoser model for offline inference.
@@ -321,9 +318,7 @@ class STIPoser(BaseModel):
             IMU orientation
         uwb : torch.Tensor
             UWB data
-        return_6d : bool
-            Whether to return 6D rotation predictions. Default is False.
-
+       
         Returns
         -------
         x : torch.Tensor
@@ -383,10 +378,7 @@ class STIPoser(BaseModel):
             dim=-2,
         )
 
-        if return_6d:
-            return x, t
-        else:
-            return self.glb_6d_to_full_local_mat(x, sensor_rot=sensors), t
+        return self.glb_6d_to_full_local_mat(x, sensor_rot=sensors), t
 
 
 if __name__ == "__main__":
