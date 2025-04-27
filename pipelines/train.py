@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str, default=r"config\config.yaml")
+    parser.add_argument("--config", type=str, default=r"config/config.yaml")
     return parser.parse_args()
 
 
