@@ -77,12 +77,12 @@ def create_log_dir(configs: dict):
     Parameters:
         configs: training configs
     """
-    os.makedirs(f'./train_log/{configs["training"]["experimnet_name"]+ "_" + TRAIN_TIME}', exist_ok=True)
+    os.makedirs(f'./train_log/{configs["training"]["experimnet_name"]}', exist_ok=True)
     os.makedirs(
-        f'./train_log/{configs["training"]["experimnet_name"]+ "_" + TRAIN_TIME}/checkpoint',
+        f'./train_log/{configs["training"]["experimnet_name"]}/checkpoint',
         exist_ok=True,
     )
-    configs["log_dir"] = f"./train_log/{configs['training']['experimnet_name']+ "_" + TRAIN_TIME}/"
+    configs["log_dir"] = f"./train_log/{configs['training']['experimnet_name']}/"
 
 
 def set_comet(configs: dict) -> comet_ml.Experiment:
@@ -271,8 +271,6 @@ def angle_between(rot1: torch.Tensor, rot2: torch.Tensor):
     Example:
     >>> angle = angle_between(rot1, rot2)
     """
-    rot1 = r6d2rot_mat(rot1).float()
-    rot2 = r6d2rot_mat(rot2).float()
     offsets = rot1.transpose(-1, -2).matmul(rot2)
     angles = roma.rotmat_to_rotvec(offsets).norm(dim=-1) * 180 / np.pi
     return angles.mean()
