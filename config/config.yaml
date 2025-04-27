@@ -1,24 +1,25 @@
 training:
-  experimnet_name: "stiposer_uwb_trans_dip"
+  experimnet_name: "stiposer_dip"
   model_name: "STIPoser"
   device: "cuda"
   resume: False
   epochs: 200
-  comet_api_key: "BcjBvrAuzGfx2Shw2HrMgbEeq"
+  comet_api_key: "Add your comet api here"
 
 smpl:
   file: "./artifacts/smpl/SMPL_MALE.pkl"
   reduced_joints: [0, 1, 2, 3, 6, 9, 12, 13, 14, 16, 17]
   ignored_joints: [7, 8, 10, 11, 20, 21, 22, 23]
-  imu_joints: [0, 4, 5, 11, 14, 15]
+  imu_joints: [0, 4, 5, 15, 18, 19]
   leaf_joints: [0, 7, 8, 15, 20, 21]
+  sip_joints: [1, 2, 16, 17]
 
 model:
   embed_dim: 288
   avg_kernel: 7
-  use_uwb: True
+  use_uwb: False
   use_uwb_attn: False
-  use_translation: True
+  use_translation: False
   use_imu_aux: True
   adj_path: "./artifacts/adj_matrixes.pt"
 
@@ -46,7 +47,7 @@ dataset:
     p: 0.5
 
 loss:
-  aux_weight: 0.5
+  aux_weight: 1.0
   trans_weight: 1.0
   pose_beta: 0.01
   trans_beta: 0.1
