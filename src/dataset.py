@@ -121,6 +121,7 @@ class STIPoseDataset(Dataset):
             "imu_acc",
             "imu_ori",
             "grot",
+            "pose",
             "jvel",
             "uwb",
             "trans",
@@ -177,15 +178,18 @@ class STIPoseDataset(Dataset):
         Returns:
             data loader
         """
-        logger.info(
-            f"Get data loader for {self.phase} set with batch size {self.batch_size} and num worker {self.num_worker}."
-        )
+        
         if self.phase in ["Train", "All"]:
             sampler = RandomSampler(self)
             bs = self.batch_size
         else:
             sampler = SequentialSampler(self)
             bs = 1
+        
+        logger.info(
+            f"Get data loader for {self.phase} set with batch size {bs} and num worker {self.num_worker}."
+        )
+        
         return DataLoader(
             self,
             batch_size=bs,

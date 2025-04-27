@@ -6,7 +6,6 @@ from pathlib import Path
 LOGS_DIR = Path("logs")
 TRAIN_LOG_DIR = Path("train_logs")
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
-TRAIN_LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 TODAY_TIME = datetime.now().strftime("%Y-%m-%d")
 TRAIN_TIME = datetime.now().strftime("%Y-%m-%d-%H-%M")
