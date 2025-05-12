@@ -68,7 +68,6 @@ class STIPoser(BaseModel):
         )
 
         self.temp1_gru = MultiGRU(self.embed_dim, self.embed_dim)
-        self.temp2_gru = MultiGRU(self.embed_dim, self.embed_dim)
 
         self.imus_spatial1 = GCNBlock(
             self.embed_dim,
@@ -76,12 +75,7 @@ class STIPoser(BaseModel):
             (self.adj_imu, self.adj_imu),
             self.use_uwb_attn,
         )
-        self.imus_spatial2 = GCNBlock(
-            self.embed_dim,
-            self.embed_dim,
-            (self.adj_imu, self.adj_imu),
-            self.use_uwb_attn,
-        )
+        
         self.pose_spatial = GCNLayer(self.embed_dim, self.embed_dim, self.adj_imu2parts)
 
         self.vel_init = nn.Sequential(
@@ -95,16 +89,33 @@ class STIPoser(BaseModel):
             nn.ReLU(),
         )
 
-        self.pose_head_foot = nn.Sequential(
-            nn.LayerNorm(self.embed_dim), nn.ReLU(), nn.Linear(self.embed_dim, 6 * 2)
+        self.pose_head_foot = MultiGRU(self.embed_dim, 6 * 2, shortcut=False)
+        self.foot_head_init = nn.Sequential(
+            nn.Linear(6 * 2, self.embed_dim),
+            nn.LayerNorm(self.embed_dim),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
+            G_Act(),
+
         )
 
-        self.pose_head_body = nn.Sequential(
-            nn.LayerNorm(self.embed_dim), nn.ReLU(), nn.Linear(self.embed_dim, 6 * 4)
+        self.pose_head_body = MultiGRU(self.embed_dim, 6 * 4, shortcut=False)
+        self.body_head_init = nn.Sequential(
+            nn.Linear(6 * 4, self.embed_dim),
+            nn.LayerNorm(self.embed_dim),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
+            G_Act(),
+
         )
 
-        self.pose_head_hand = nn.Sequential(
-            nn.LayerNorm(self.embed_dim), nn.ReLU(), nn.Linear(self.embed_dim, 6 * 4)
+        self.pose_head_hand = MultiGRU(self.embed_dim, 6 * 4, shortcut=False)
+        self.hand_head_init = nn.Sequential(
+            nn.Linear(6 * 4, self.embed_dim),
+            nn.LayerNorm(self.embed_dim),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
+            G_Act(),
         )
 
         if self.use_translation:
@@ -165,6 +176,8 @@ class STIPoser(BaseModel):
 
         batch_size, seq_len, num_imus, _ = imu_acc.size()
         last_vimu = datas["last_jvel"].to(x.dtype)
+        last_avel = datas["last_javel"].to(x.dtype)
+        last_jacc = datas["last_jacc"].to(x.dtype)
 
         hs1 = self.vel_init(last_vimu[:, self.leaf].unsqueeze(1))
         hs1 = list(hs1.chunk(2, dim=-1))
@@ -177,8 +190,7 @@ class STIPoser(BaseModel):
         x = self.imu_embedding(x)
         x = self.imus_spatial1(x, uwb)
         x, _ = self.temp1_gru(x, hs1)
-        x = self.imus_spatial2(x, uwb)
-        x, _ = self.temp2_gru(x, None)
+        
         if self.use_imu_aux:
             outputs["aux_ivel"] = self.imuv_head(x).reshape(batch_size, seq_len, 6, 3)
 

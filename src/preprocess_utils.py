@@ -67,7 +67,36 @@ def _syn_acc(trans: torch.Tensor) -> torch.Tensor:
     acc[4:-4] = (trans[0:-8] + trans[8:] - 2 * trans[4:-4]) * 3600 / 16
     return acc
 
+def _syn_ang_vel(ori: torch.Tensor):
+    """
+    Synthesizes angular velocity signals from orientation data using finite difference approximation.
+    
+    Parameters
+    ----------
+    ori : torch.Tensor
+        Input orientation tensor of shape (..., 3, 3)
 
+    Returns
+    -------
+    torch.Tensor
+        Synthetic angular velocity tensor of shape (..., 3)
+
+    Examples
+    --------
+    >>> ang_vel = _syn_ang_vel(orientations)
+    """
+    av = torch.zeros(ori.shape[: -1])
+    dt = 1 / 60
+    R_dot = (ori[1:] - ori[:-1]) / dt
+    R_mid = ori[:-1]
+    
+    omega = torch.matmul(R_mid.transpose(-1, -2), R_dot)
+    av_x =  omega[..., 2, 1]
+    av_y =  omega[..., 0, 2]
+    av_z =  omega[..., 1, 0]
+    
+    av[1:] = torch.stack([av_x, av_y, av_z], dim=-1)
+    return av
 def _syn_vel(trans: torch.Tensor, root: torch.Tensor) -> torch.Tensor:
     """
     Computes synthetic velocity signals from translation data in root coordinate frame.
@@ -75,14 +104,14 @@ def _syn_vel(trans: torch.Tensor, root: torch.Tensor) -> torch.Tensor:
     Parameters
     ----------
     trans : torch.Tensor
-        Translation tensor of shape (N, 3)
+        Translation tensor of shape (..., 3)
     root : torch.Tensor
-        Root rotation matrices of shape (N, 1, 3, 3)
+        Root rotation matrices of shape (..., 3, 3)
 
     Returns
     -------
     torch.Tensor
-        Velocity tensor in root coordinate system, shape (N, 3)
+        Velocity tensor in root coordinate system, shape (..., 3)
 
     Examples
     --------

@@ -71,6 +71,8 @@ def extract_seq(phase, data_path, seq_length, overlap=0):
                     "uwb": data["uwb"][start_index:end_index],
                     "last_trans": data["trans"][start_index - 1],
                     "last_jvel": data["jvel"][start_index - 1],
+                    "last_avel": data["avel"][start_index - 1],
+                    "last_jacc": data["jacc"][start_index - 1],
                 }
 
                 if "imu_acc" and "imu_ori" in data.keys():

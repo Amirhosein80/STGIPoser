@@ -21,6 +21,7 @@ from src.preprocess_utils import (
     XSENS_IMU_MASK,
     _syn_acc,
     _syn_uwb,
+    _syn_ang_vel,
     _syn_vel,
     read_mvnx,
     read_xlsx,
@@ -105,7 +106,13 @@ def process_dip(smpl_path: str, dip_path: str, folder: str = "Test") -> None:
         )
 
         jvel = _syn_vel(joint, grot[:, 0:1])
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
+        
+        assert (
+            avel.shape[0] == jvel.shape[0]
+        ), f"jvel shape {jvel.shape} length {length}"
 
         targets = {
             "imu_acc": acc.cpu().numpy(),
@@ -114,6 +121,8 @@ def process_dip(smpl_path: str, dip_path: str, folder: str = "Test") -> None:
             "grot": grot.cpu().numpy(),
             "trans": trans.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -245,7 +254,8 @@ def process_total_capture(smpl_path: str, tc_path: str, folder: str = "Valid") -
         acc = acc + d
 
         jvel = _syn_vel(joint, grot[:, 0:1])
-
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
 
         targets = {
@@ -255,6 +265,8 @@ def process_total_capture(smpl_path: str, tc_path: str, folder: str = "Valid") -
             "trans": trans.cpu().numpy(),
             "grot": grot.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -327,7 +339,8 @@ def process_emonike(smpl_path: str, emonike_path: str, folder: str = "Train") ->
         )
 
         jvel = _syn_vel(joint, grot[:, 0:1])
-
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
 
         targets = {
@@ -337,6 +350,8 @@ def process_emonike(smpl_path: str, emonike_path: str, folder: str = "Train") ->
             "trans": trans.cpu().numpy(),
             "grot": grot.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -411,7 +426,8 @@ def process_andy(smpl_path, mvnx_path, folder: str = "Train") -> None:
         )
 
         jvel = _syn_vel(joint, grot[:, 0:1])
-
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
 
         targets = {
@@ -421,6 +437,8 @@ def process_andy(smpl_path, mvnx_path, folder: str = "Train") -> None:
             "trans": trans.cpu().numpy(),
             "grot": grot.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -490,7 +508,8 @@ def process_cip(smpl_path, mvnx_path, folder: str = "Train") -> None:
         )
 
         jvel = _syn_vel(joint, grot[:, 0:1])
-
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
 
         targets = {
@@ -500,6 +519,8 @@ def process_cip(smpl_path, mvnx_path, folder: str = "Train") -> None:
             "trans": trans.cpu().numpy(),
             "grot": grot.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -587,7 +608,8 @@ def process_virginia(smpl_path, mvnx_path, folder: str = "Train") -> None:
                 )
 
                 jvel = _syn_vel(joint, grot[:, 0:1])
-
+                avel = _syn_ang_vel(grot)
+                jacc = _syn_acc(joint)
                 out_uwb = _syn_uwb(vert[:, V_MASK])
 
                 targets = {
@@ -597,6 +619,8 @@ def process_virginia(smpl_path, mvnx_path, folder: str = "Train") -> None:
                     "trans": trans.cpu().numpy(),
                     "grot": grot.cpu().numpy(),
                     "jvel": jvel.cpu().numpy(),
+                    "avel": avel.cpu().numpy(),
+                    "jacc": jacc.cpu().numpy(),
                     "uwb": out_uwb.cpu().numpy(),
                 }
 
@@ -616,13 +640,15 @@ def process_virginia(smpl_path, mvnx_path, folder: str = "Train") -> None:
                     **targets,
                 )
                 del pose, trans, grot, joint, vert
+                
+                torch.cuda.empty_cache()
+                gc.collect()
 
         loop.set_description(
             f"Processed {file}, discrete num {len(discread_files)}, length {length}"
         )
         # del pose, trans, grot, joint, vert, targets, length
-        torch.cuda.empty_cache()
-        gc.collect()
+        
 
 
 def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
@@ -669,7 +695,8 @@ def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
         )
 
         jvel = _syn_vel(joint, grot[:, 0:1])
-
+        avel = _syn_ang_vel(grot)
+        jacc = _syn_acc(joint)
         out_uwb = _syn_uwb(vert[:, V_MASK])
 
         targets = {
@@ -679,6 +706,8 @@ def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
             "trans": trans.cpu().numpy(),
             "grot": grot.cpu().numpy(),
             "jvel": jvel.cpu().numpy(),
+            "avel": avel.cpu().numpy(),
+            "jacc": jacc.cpu().numpy(),
             "uwb": out_uwb.cpu().numpy(),
         }
 
@@ -701,8 +730,8 @@ def process_unipd(smpl_path, mvnx_path, folder: str = "Train") -> None:
 
 
 if __name__ == "__main__":
-    pass
-    # smpl_path = "./data/smpl/SMPL_MALE.pkl"
+    # pass
+    smpl_path = "./data/smpl/SMPL_MALE.pkl"
 
     # dip_path = "./data/raw data/DIP_IMU"
     # tc_path = "./data/raw data/TotalCapture"
