@@ -4,7 +4,7 @@ training:
   device: "cuda"
   resume: False
   epochs: 200
-  comet_api_key: "Add your comet api here"
+  comet_api_key: "BcjBvrAuzGfx2Shw2HrMgbEeq"
 
 smpl:
   file: "./artifacts/smpl/SMPL_MALE.pkl"
